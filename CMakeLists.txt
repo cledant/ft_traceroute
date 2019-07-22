@@ -5,7 +5,11 @@ project(ft_traceroute)
 add_executable(ft_traceroute
 		srcs/ft_traceroute.c
 		srcs/opt.c
-		srcs/init_network.c)
+		srcs/init_network.c
+		srcs/init_socket.c
+		srcs/loop.c
+		srcs/icmp_header.c
+		srcs/utility.c)
 target_include_directories(ft_traceroute PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/includes)
 target_compile_options(ft_traceroute PRIVATE -Wall -Wextra -Werror -std=gnu11 -march=native -flto)

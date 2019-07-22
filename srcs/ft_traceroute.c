@@ -3,6 +3,9 @@
 static void
 cleanEnv(t_env *e)
 {
+    for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
+        close(e->probes.socketList[i]);
+    }
     if (e->dest.resolvedAddr) {
         freeaddrinfo(e->dest.resolvedAddr);
     }
@@ -32,7 +35,7 @@ resolveAddrToPing(t_dest *dest)
 int
 main(int32_t argc, char const **argv)
 {
-    t_env e = { { 0 }, { 0 } };
+    t_env e = { { 0 }, { 0 }, { 0 } };
 
     if (getuid()) {
         printf("ft_traceroute: not enough privilege, use sudo\n");
@@ -45,11 +48,28 @@ main(int32_t argc, char const **argv)
         return (EXIT_OK);
     }
     e.dest.toTrace = e.opt.toTrace;
+    e.probes.nbProbes = e.opt.nbProbes;
     if (resolveAddrToPing(&e.dest)) {
         cleanEnv(&e);
         return (EXIT_FAIL);
     }
     printf("ToTrace = %s | IP = %s\n", e.dest.toTrace, e.dest.ip);
+    for (uint64_t i = 0; i < e.probes.nbProbes; ++i) {
+        setupRespBuffer(&e.probes.response[i]);
+    }
+    if (e.opt.useIcmp) {
+        if (initIcmpSocket(&e.probes)) {
+            cleanEnv(&e);
+            return (EXIT_FAIL);
+        }
+        icmpLoop(&e);
+    } else if (e.opt.useTcp) {
+        printf("TODO TCP\n");
+        return (EXIT_OK);
+    } else {
+        printf("TODO UDP\n");
+        return (EXIT_OK);
+    }
     cleanEnv(&e);
     return (EXIT_OK);
 }

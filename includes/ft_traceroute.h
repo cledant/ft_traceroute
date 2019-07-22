@@ -33,6 +33,7 @@
 #define MAX_TTL_VALUE UCHAR_MAX
 #define MAX_PORT USHRT_MAX
 #define MAX_PACKET_SIZE 65000
+#define MIN_ICMP_SIZE (uint8_t)(sizeof(struct icmphdr) + sizeof(struct iphdr))
 #define ECHOREPLY 0
 #define TTL_ERROR 11
 
@@ -67,10 +68,22 @@ typedef struct s_response
     uint8_t iovecBuff[USHRT_MAX];
 } t_response;
 
+typedef struct s_probes
+{
+    uint64_t nbProbes;
+    int32_t socketList[MAX_PROBES];
+    uint64_t startTime[MAX_PROBES];
+    uint64_t endTime[MAX_PROBES];
+    uint8_t sendBuffer[USHRT_MAX];
+    t_response response[MAX_PROBES];
+    fd_set fdSet;
+} t_probes;
+
 typedef struct s_env
 {
     t_option opt;
     t_dest dest;
+    t_probes probes;
 } t_env;
 
 // opt.c
@@ -80,5 +93,24 @@ void displayUsage();
 // init_network.c
 uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
 struct addrinfo *resolveAddr(char const *addr);
+
+// init_socket.c
+uint8_t initIcmpSocket(t_probes *socketList);
+
+// loop.c
+void icmpLoop(t_env *e);
+
+// icmp_header.c
+void setIcmpPacket(uint8_t *buff,
+                   t_option const *opt,
+                   t_dest const *dest,
+                   uint16_t seq,
+                   uint16_t ttl);
+
+// utility.c
+uint64_t convertTime(struct timeval const *ts);
+uint16_t swapUint16(uint16_t val);
+uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
+void setupRespBuffer(t_response *resp);
 
 #endif
