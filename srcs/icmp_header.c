@@ -14,13 +14,13 @@ setImcpHeader(struct icmphdr *icmpHdr, uint16_t seq, uint16_t icmpMsgSize)
 static inline void
 setIpHdr(struct iphdr *ipHdr,
          uint8_t ttl,
-         t_option const *opt,
+         uint16_t packetSize,
          t_dest const *dest)
 {
     ipHdr->version = 4;
     ipHdr->tos = 0;
     ipHdr->ihl = 5;
-    ipHdr->tot_len = opt->packetSize;
+    ipHdr->tot_len = packetSize;
     ipHdr->id = swapUint16(getpid());
     ipHdr->frag_off = 0;
     ipHdr->ttl = ttl;
@@ -33,8 +33,8 @@ setIpHdr(struct iphdr *ipHdr,
 
 void
 setIcmpPacket(uint8_t *buff,
-              t_option const *opt,
               t_dest const *dest,
+              uint16_t packetSize,
               uint16_t seq,
               uint16_t ttl)
 {
@@ -42,9 +42,9 @@ setIcmpPacket(uint8_t *buff,
     struct icmphdr *icmpHdr = (struct icmphdr *)(buff + sizeof(struct iphdr));
     uint8_t *msg = (uint8_t *)icmpHdr + sizeof(struct icmphdr);
 
-    if (opt->packetSize > MIN_ICMP_SIZE) {
-        memset(msg, 42, opt->packetSize - MIN_ICMP_SIZE);
+    if (packetSize > MIN_ICMP_SIZE) {
+        memset(msg, 42, packetSize - MIN_ICMP_SIZE);
     }
-    setImcpHeader(icmpHdr, seq, opt->packetSize - sizeof(struct iphdr));
-    setIpHdr(ipHdr, ttl, opt, dest);
+    setImcpHeader(icmpHdr, seq, packetSize - sizeof(struct iphdr));
+    setIpHdr(ipHdr, ttl, packetSize, dest);
 }

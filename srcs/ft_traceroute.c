@@ -53,7 +53,6 @@ main(int32_t argc, char const **argv)
         cleanEnv(&e);
         return (EXIT_FAIL);
     }
-    printf("ToTrace = %s | IP = %s\n", e.dest.toTrace, e.dest.ip);
     for (uint64_t i = 0; i < e.probes.nbProbes; ++i) {
         setupRespBuffer(&e.probes.response[i]);
     }

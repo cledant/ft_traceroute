@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -34,8 +35,6 @@
 #define MAX_PORT USHRT_MAX
 #define MAX_PACKET_SIZE 65000
 #define MIN_ICMP_SIZE (uint8_t)(sizeof(struct icmphdr) + sizeof(struct iphdr))
-#define ECHOREPLY 0
-#define TTL_ERROR 11
 
 typedef struct s_option
 {
@@ -74,8 +73,9 @@ typedef struct s_probes
     int32_t socketList[MAX_PROBES];
     uint64_t startTime[MAX_PROBES];
     uint64_t endTime[MAX_PROBES];
-    uint8_t sendBuffer[USHRT_MAX];
+    uint8_t sendBuffer[USHRT_MAX][MAX_PROBES];
     t_response response[MAX_PROBES];
+    uint8_t shouldStop;
     fd_set fdSet;
 } t_probes;
 
@@ -102,15 +102,22 @@ void icmpLoop(t_env *e);
 
 // icmp_header.c
 void setIcmpPacket(uint8_t *buff,
-                   t_option const *opt,
                    t_dest const *dest,
+                   uint16_t packetSize,
                    uint16_t seq,
                    uint16_t ttl);
 
 // utility.c
 uint64_t convertTime(struct timeval const *ts);
 uint16_t swapUint16(uint16_t val);
-uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 void setupRespBuffer(t_response *resp);
+
+// display.c
+void printIcmpHdr(struct icmphdr const *icmpHdr);
+
+// checksum.c
+uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
+uint8_t checkIpHdrChecksum(struct iphdr *ipHdr, int64_t recvBytes);
+uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 
 #endif

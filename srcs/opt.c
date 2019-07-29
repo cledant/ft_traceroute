@@ -88,8 +88,8 @@ parseInt(t_option *opt, char const *nextArg, uint64_t i)
 static uint8_t
 parseSingle(t_option *opt, char const *arg, char const *nextArgv)
 {
-    char const tab[NBR_OPTION][3] = { "-q", "-f", "-m", "-p", "-s",
-                                      "-h", "-n", "-I", "-T" };
+    static char const tab[][3] = { "-q", "-f", "-m", "-p", "-s",
+                                   "-h", "-n", "-I", "-T" };
 
     for (uint64_t i = 0; i < NBR_OPTION; ++i) {
         if (!strcmp(arg, tab[i])) {
