@@ -1,6 +1,6 @@
 #include "ft_traceroute.h"
 
-static void
+static uint8_t
 setValue(int32_t *var,
          int32_t val,
          int32_t min,
@@ -9,9 +9,10 @@ setValue(int32_t *var,
 {
     if (val < min || val > max) {
         printf("ft_traceroute: %s: %d\n", errorMsg, val);
-        return;
+        return (FALSE);
     }
     *var = val;
+    return (TRUE);
 }
 
 static uint8_t
@@ -19,7 +20,7 @@ parseMulti(t_option *opt, char const *arg, uint64_t len)
 {
     if (arg[0] != '-') {
         opt->displayUsage = 1;
-        return (0);
+        return (FALSE);
     }
     for (uint64_t i = 1; i < len; ++i) {
         if (arg[i] == 'h') {
@@ -36,7 +37,7 @@ parseMulti(t_option *opt, char const *arg, uint64_t len)
             opt->useTcp = TRUE;
         }
     }
-    return (0);
+    return (FALSE);
 }
 
 static uint8_t
@@ -44,45 +45,39 @@ parseInt(t_option *opt, char const *nextArg, uint64_t i)
 {
     if (!nextArg) {
         opt->displayUsage = 1;
-        return (0);
+        return (FALSE);
     }
     switch (i) {
         case 0:
-            setValue(&opt->nbProbes,
-                     atoi(nextArg),
-                     0,
-                     MAX_PROBES,
-                     "invalid probe value");
-            break;
+            return (setValue(&opt->nbProbes,
+                             atoi(nextArg),
+                             0,
+                             MAX_PROBES,
+                             "invalid probe value"));
         case 1:
-            setValue(&opt->startTtl,
-                     atoi(nextArg),
-                     1,
-                     MAX_TTL_VALUE,
-                     "invalid start ttl value");
-            break;
+            return (setValue(&opt->startTtl,
+                             atoi(nextArg),
+                             1,
+                             MAX_TTL_VALUE,
+                             "invalid start ttl value"));
         case 2:
-            setValue(&opt->maxTtl,
-                     atoi(nextArg),
-                     1,
-                     MAX_TTL_VALUE,
-                     "invalid max ttl value");
-            break;
+            return (setValue(&opt->maxTtl,
+                             atoi(nextArg),
+                             1,
+                             MAX_TTL_VALUE,
+                             "invalid max ttl value"));
         case 3:
-            setValue(
-              &opt->port, atoi(nextArg), 0, MAX_PORT, "invalid port value");
-            break;
+            return (setValue(
+              &opt->port, atoi(nextArg), 0, MAX_PORT, "invalid port value"));
         case 4:
-            setValue(&opt->packetSize,
-                     atoi(nextArg),
-                     0,
-                     MAX_PACKET_SIZE,
-                     "invalid packet size value");
-            break;
+            return (setValue(&opt->packetSize,
+                             atoi(nextArg),
+                             0,
+                             MAX_PACKET_SIZE,
+                             "invalid packet size value"));
         default:
-            return (0);
+            return (FALSE);
     }
-    return (1);
 }
 
 static uint8_t
@@ -100,7 +95,7 @@ parseSingle(t_option *opt, char const *arg, char const *nextArgv)
             }
         }
     }
-    return (0);
+    return (FALSE);
 }
 
 static uint8_t
@@ -152,23 +147,4 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
     if (opt->useIcmp && opt->packetSize < MIN_ICMP_SIZE) {
         opt->packetSize = MIN_ICMP_SIZE;
     }
-}
-
-void
-displayUsage()
-{
-    printf("Usage: ft_traceroute [-hnIT] [-q nqueries] [-f first_ttl] [-m "
-           "max_ttl] [-p port] [-s packet_size] destination\n");
-    printf("\t-h : Display usage\n");
-    printf("\t-n : No name lookup for host address\n");
-    printf("\t-I : Use ICMP echo for probes\n");
-    printf("\t-T : Use TCP sync for probes\n");
-    printf("\t-q : Number of probe number per hop. Default is 3. Max is 10\n");
-    printf("\t-f : TTL value at start. Default is 1\n");
-    printf("\t-m : Max TTL value. Default is 30\n");
-    printf("\t-p : Port\n\tFor UDP probe : initial port and is incremented at "
-           "each probe\n\tICMP probe : initial sequence value\n\tTCP probe : "
-           "constant port value\n");
-    printf("\t-s : Packet size. From 0 to MTU value minus headers.\n\tMTU "
-           "value is usually 1500\n");
 }

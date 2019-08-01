@@ -88,7 +88,6 @@ typedef struct s_env
 
 // opt.c
 void parseOptions(t_option *opt, int32_t argc, char const **argv);
-void displayUsage();
 
 // init_network.c
 uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
@@ -108,12 +107,15 @@ void setIcmpPacket(uint8_t *buff,
                    uint16_t ttl);
 
 // utility.c
+uint64_t getCurrentTime();
 uint64_t convertTime(struct timeval const *ts);
 uint16_t swapUint16(uint16_t val);
 void setupRespBuffer(t_response *resp);
 
 // display.c
+void displayUsage();
 void printIcmpHdr(struct icmphdr const *icmpHdr);
+void printLoopStats(t_probes const *probes);
 
 // checksum.c
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);

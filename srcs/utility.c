@@ -1,6 +1,15 @@
 #include "ft_traceroute.h"
 
 inline uint64_t
+getCurrentTime()
+{
+    struct timeval ts;
+
+    gettimeofday(&ts, NULL);
+    return (convertTime(&ts));
+}
+
+inline uint64_t
 convertTime(struct timeval const *ts)
 {
     return (ts->tv_sec * SEC_IN_US + ts->tv_usec);
