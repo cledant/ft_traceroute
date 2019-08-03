@@ -32,7 +32,7 @@ printIcmpHdr(struct icmphdr const *icmpHdr)
 }
 
 void
-printLoopStats(t_probes const *probes, uint64_t curTtl)
+printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup)
 {
     uint8_t sameDest = 0;
 
@@ -50,17 +50,21 @@ printLoopStats(t_probes const *probes, uint64_t curTtl)
                       &probes->response[i].addr.sin_addr.s_addr,
                       ip,
                       INET_ADDRSTRLEN);
-            if (getnameinfo((struct sockaddr *)&probes->response[i].addr,
-                            sizeof(struct sockaddr),
-                            fqdn,
-                            NI_MAXHOST,
-                            NULL,
-                            0,
-                            0)) {
-                printf(" %s (%s)", ip, ip);
+            if (!noLookup) {
+                if (getnameinfo((struct sockaddr *)&probes->response[i].addr,
+                                sizeof(struct sockaddr),
+                                fqdn,
+                                NI_MAXHOST,
+                                NULL,
+                                0,
+                                0)) {
+                    printf(" %s (%s)", ip, ip);
 
+                } else {
+                    printf(" %s (%s)", fqdn, ip);
+                }
             } else {
-                printf(" %s (%s)", fqdn, ip);
+                printf(" %s", ip);
             }
         }
         if (!(probes->endTime[i] - probes->startTime[i])) {

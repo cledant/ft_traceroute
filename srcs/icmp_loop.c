@@ -73,7 +73,6 @@ icmpLoop(t_env *e)
            e->opt.packetSize);
     for (uint64_t curTtl = e->opt.startTtl; curTtl < (uint64_t)e->opt.maxTtl;
          ++curTtl) {
-        uint64_t startCurTtl = getCurrentTime();
         for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
             setIcmpPacket(e->probes.sendBuffer[0],
                           &e->dest,
@@ -102,9 +101,7 @@ icmpLoop(t_env *e)
             }
             ++curSeq;
         }
-        printLoopStats(&e->probes, curTtl);
-        while ((getCurrentTime() - startCurTtl) < 3 * SEC_IN_US) {
-        }
+        printLoopStats(&e->probes, curTtl, e->opt.noLookup);
         if (e->probes.shouldStop) {
             return;
         }

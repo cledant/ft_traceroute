@@ -5,9 +5,9 @@ project(ft_traceroute)
 add_executable(ft_traceroute
 		srcs/ft_traceroute.c
 		srcs/opt.c
-		srcs/init_network.c
-		srcs/init_socket.c
-		srcs/loop.c
+		srcs/utility_network.c
+		srcs/icmp_socket.c
+		srcs/icmp_loop.c
 		srcs/icmp_header.c
 		srcs/utility.c
 		srcs/display.c

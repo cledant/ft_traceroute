@@ -89,14 +89,14 @@ typedef struct s_env
 // opt.c
 void parseOptions(t_option *opt, int32_t argc, char const **argv);
 
-// init_network.c
+// utility_network.c
 uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
 struct addrinfo *resolveAddr(char const *addr);
 
-// init_socket.c
+// icmp_socket.c
 uint8_t initIcmpSocket(t_probes *socketList);
 
-// loop.c
+// icmp_loop.c
 void icmpLoop(t_env *e);
 
 // icmp_header.c
@@ -115,7 +115,7 @@ void setupRespBuffer(t_response *resp);
 // display.c
 void displayUsage();
 void printIcmpHdr(struct icmphdr const *icmpHdr);
-void printLoopStats(t_probes const *probes, uint64_t curTtl);
+void printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup);
 
 // checksum.c
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
