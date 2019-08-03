@@ -1,10 +1,10 @@
 #include "ft_traceroute.h"
 
 static inline uint8_t
-checkTimeout(t_probes *probes)
+checkTimeout(t_probes *probes, uint64_t probeIdx)
 {
-    if ((getCurrentTime() - probes->startTime[0]) > SEC_IN_US) {
-        probes->endTime[0] = probes->startTime[0];
+    if ((getCurrentTime() - probes->startTime[probeIdx]) > SEC_IN_US) {
+        probes->endTime[probeIdx] = probes->startTime[probeIdx];
         return (TRUE);
     }
     return (FALSE);
@@ -12,51 +12,53 @@ checkTimeout(t_probes *probes)
 
 static inline uint8_t
 processResponse(t_probes *probes,
+                uint64_t probeIdx,
                 uint64_t curSeq,
                 int64_t recvBytes,
                 uint64_t recvTime)
 {
     struct icmphdr *icmpHdr =
-      (struct icmphdr *)(probes->response[0].iovecBuff + sizeof(struct iphdr));
+      (struct icmphdr *)(probes->response[probeIdx].iovecBuff +
+                         sizeof(struct iphdr));
     struct iphdr *err =
-      (struct iphdr *)(probes->response[0].iovecBuff + MIN_ICMP_SIZE);
+      (struct iphdr *)(probes->response[probeIdx].iovecBuff + MIN_ICMP_SIZE);
 
     if (recvBytes < 0) {
         if (swapUint16(err->id) == getpid()) {
-            probes->endTime[0] = probes->startTime[0];
+            probes->endTime[probeIdx] = probes->startTime[probeIdx];
             return (TRUE);
         }
-        return (checkTimeout(probes));
+        return (checkTimeout(probes, probeIdx));
     }
-    if (checkIpHdrChecksum((struct iphdr *)probes->response[0].iovecBuff,
+    if (checkIpHdrChecksum((struct iphdr *)probes->response[probeIdx].iovecBuff,
                            recvBytes) ||
         checkIcmpHdrChecksum(icmpHdr, recvBytes)) {
-        return (checkTimeout(probes));
+        return (checkTimeout(probes, probeIdx));
     }
     if (icmpHdr->type == ICMP_DEST_UNREACH) {
         if (swapUint16(err->id) == getpid()) {
-            probes->endTime[0] = probes->startTime[0];
+            probes->endTime[probeIdx] = probes->startTime[probeIdx];
             return (TRUE);
         }
-        return (checkTimeout(probes));
+        return (checkTimeout(probes, probeIdx));
     }
     if (icmpHdr->type == ICMP_TIME_EXCEEDED) {
         if (swapUint16(err->id) == getpid()) {
-            probes->endTime[0] = recvTime;
+            probes->endTime[probeIdx] = recvTime;
             return (TRUE);
         }
-        return (checkTimeout(probes));
+        return (checkTimeout(probes, probeIdx));
     }
     if (swapUint16(icmpHdr->un.echo.id) != getpid() ||
         swapUint16(icmpHdr->un.echo.sequence) != curSeq) {
-        return (checkTimeout(probes));
+        return (checkTimeout(probes, probeIdx));
     }
     if (icmpHdr->type == ICMP_ECHOREPLY) {
-        probes->endTime[0] = recvTime;
+        probes->endTime[probeIdx] = recvTime;
         probes->shouldStop = TRUE;
         return (TRUE);
     }
-    return (checkTimeout(probes));
+    return (checkTimeout(probes, probeIdx));
 }
 
 void
@@ -78,7 +80,8 @@ icmpLoop(t_env *e)
                           e->opt.packetSize,
                           curSeq,
                           curTtl);
-            e->probes.startTime[0] = getCurrentTime();
+            memset(&e->probes.response[i].addr, 0, sizeof(struct sockaddr_in));
+            e->probes.startTime[i] = getCurrentTime();
             int64_t sendBytes = sendto(e->probes.socketList[0],
                                        e->probes.sendBuffer[0],
                                        e->opt.packetSize,
@@ -91,17 +94,17 @@ icmpLoop(t_env *e)
             }
             while (1) {
                 int64_t recvBytes = recvmsg(
-                  e->probes.socketList[0], &e->probes.response[0].msgHdr, 0);
+                  e->probes.socketList[0], &e->probes.response[i].msgHdr, 0);
                 if (processResponse(
-                      &e->probes, curSeq, recvBytes, getCurrentTime())) {
+                      &e->probes, i, curSeq, recvBytes, getCurrentTime())) {
                     break;
                 }
             }
             ++curSeq;
         }
+        printLoopStats(&e->probes, curTtl);
         while ((getCurrentTime() - startCurTtl) < 3 * SEC_IN_US) {
         }
-        printLoopStats(&e->probes);
         if (e->probes.shouldStop) {
             return;
         }

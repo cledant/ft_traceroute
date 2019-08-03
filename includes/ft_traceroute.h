@@ -115,7 +115,7 @@ void setupRespBuffer(t_response *resp);
 // display.c
 void displayUsage();
 void printIcmpHdr(struct icmphdr const *icmpHdr);
-void printLoopStats(t_probes const *probes);
+void printLoopStats(t_probes const *probes, uint64_t curTtl);
 
 // checksum.c
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
