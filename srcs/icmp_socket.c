@@ -6,13 +6,13 @@ initIcmpSocket(t_probes *socketList)
     uint8_t set = 1;
     struct timeval timeout = { 1, 0 };
 
-    if ((socketList->socketList[0] = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) <
+    if ((socketList->listenSocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) <
         3) {
         printf("ft_traceroute : Error initializing socket\n");
         return (TRUE);
     }
     // Timeout
-    if (setsockopt(socketList->socketList[0],
+    if (setsockopt(socketList->listenSocket,
                    SOL_SOCKET,
                    SO_RCVTIMEO,
                    &timeout,
@@ -21,7 +21,7 @@ initIcmpSocket(t_probes *socketList)
         return (TRUE);
     }
     // Manual Ip header
-    if (setsockopt(socketList->socketList[0],
+    if (setsockopt(socketList->listenSocket,
                    IPPROTO_IP,
                    IP_HDRINCL,
                    &set,

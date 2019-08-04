@@ -3,8 +3,11 @@
 static void
 cleanEnv(t_env *e)
 {
-    for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
-        close(e->probes.socketList[i]);
+    if (e->probes.sendSocket > 2) {
+        close(e->probes.sendSocket);
+    }
+    if (e->probes.listenSocket > 2) {
+        close(e->probes.sendSocket);
     }
     if (e->dest.resolvedAddr) {
         freeaddrinfo(e->dest.resolvedAddr);
@@ -56,17 +59,27 @@ main(int32_t argc, char const **argv)
     for (uint64_t i = 0; i < e.probes.nbProbes; ++i) {
         setupRespBuffer(&e.probes.response[i]);
     }
+    if (initIcmpSocket(&e.probes)) {
+        cleanEnv(&e);
+        return (EXIT_FAIL);
+    }
     if (e.opt.useIcmp) {
-        if (initIcmpSocket(&e.probes)) {
-            cleanEnv(&e);
-            return (EXIT_FAIL);
+        if (e.opt.packetSize < MIN_ICMP_SIZE) {
+            e.opt.packetSize = MIN_ICMP_SIZE;
         }
         icmpLoop(&e);
     } else if (e.opt.useTcp) {
         printf("TODO TCP\n");
         return (EXIT_OK);
     } else {
-        printf("TODO UDP\n");
+        if (initUdpSocket(&e.probes)) {
+            cleanEnv(&e);
+            return (EXIT_FAIL);
+        }
+        if (e.opt.packetSize < MIN_UDP_SIZE) {
+            e.opt.packetSize = MIN_UDP_SIZE;
+        }
+        udpLoop(&e);
         return (EXIT_OK);
     }
     cleanEnv(&e);
