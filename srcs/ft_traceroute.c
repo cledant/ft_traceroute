@@ -51,6 +51,7 @@ main(int32_t argc, char const **argv)
         return (EXIT_OK);
     }
     e.dest.toTrace = e.opt.toTrace;
+    e.dest.protocol = e.opt.protocol;
     e.probes.nbProbes = e.opt.nbProbes;
     if (resolveAddrToPing(&e.dest)) {
         cleanEnv(&e);
@@ -63,25 +64,11 @@ main(int32_t argc, char const **argv)
         cleanEnv(&e);
         return (EXIT_FAIL);
     }
-    if (e.opt.useIcmp) {
-        if (e.opt.packetSize < MIN_ICMP_SIZE) {
-            e.opt.packetSize = MIN_ICMP_SIZE;
-        }
-        icmpLoop(&e);
-    } else if (e.opt.useTcp) {
-        printf("TODO TCP\n");
-        return (EXIT_OK);
-    } else {
-        if (initUdpSocket(&e.probes)) {
-            cleanEnv(&e);
-            return (EXIT_FAIL);
-        }
-        if (e.opt.packetSize < MIN_UDP_SIZE) {
-            e.opt.packetSize = MIN_UDP_SIZE;
-        }
-        udpLoop(&e);
-        return (EXIT_OK);
+    if (initRawSocket(&e.probes)) {
+        cleanEnv(&e);
+        return (EXIT_FAIL);
     }
+    loop(&e);
     cleanEnv(&e);
     return (EXIT_OK);
 }

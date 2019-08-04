@@ -1,7 +1,7 @@
 #include "ft_traceroute.h"
 
 void
-icmpLoop(t_env *e)
+loop(t_env *e)
 {
     uint64_t curSeq = e->opt.port;
 
@@ -13,21 +13,21 @@ icmpLoop(t_env *e)
     for (uint64_t curTtl = e->opt.startTtl; curTtl < (uint64_t)e->opt.maxTtl;
          ++curTtl) {
         for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
-            setIcmpPacket(e->probes.sendBuffer,
-                          &e->dest,
-                          e->opt.packetSize,
-                          curSeq,
-                          curTtl);
+            setPacket(e->probes.sendBuffer,
+                      &e->dest,
+                      e->opt.packetSize,
+                      curSeq,
+                      curTtl);
             memset(&e->probes.response[i].addr, 0, sizeof(struct sockaddr_in));
             e->probes.startTime[i] = getCurrentTime();
-            int64_t sendBytes = sendto(e->probes.listenSocket,
+            int64_t sendBytes = sendto(e->probes.sendSocket,
                                        e->probes.sendBuffer,
                                        e->opt.packetSize,
                                        0,
                                        e->dest.addrDest->ai_addr,
                                        e->dest.addrDest->ai_addrlen);
             if (sendBytes < e->opt.packetSize) {
-                printf("ft_traceroute: error sending icmp pakcet\n");
+                printf("ft_traceroute: error sending pakcet\n");
                 return;
             }
             while (1) {

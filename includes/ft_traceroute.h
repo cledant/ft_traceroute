@@ -29,7 +29,9 @@
 #define DEFAULT_START_TTL 1
 #define DEFAULT_MAX_TTL 30
 #define DEFAULT_PACKET_SIZE 60
-#define DEFAULT_PORT 33434
+#define DEFAULT_OPT_PORT -1
+#define DEFAULT_UDP_PORT 33434
+#define DEFAULT_SEQ 0
 #define NBR_OPTION 9
 #define MAX_PROBES 10
 #define MAX_TTL_VALUE UCHAR_MAX
@@ -38,22 +40,11 @@
 #define MIN_ICMP_SIZE (uint8_t)(sizeof(struct icmphdr) + sizeof(struct iphdr))
 #define MIN_UDP_SIZE (uint8_t)(sizeof(struct udphdr) + sizeof(struct iphdr))
 
-typedef struct s_udp_pseudoheader
-{
-    uint32_t srcAddr;
-    uint32_t dstAddr;
-    uint8_t placeholder;
-    uint8_t protocol;
-    uint32_t len;
-} t_udp_pseudoheader;
-
 typedef struct s_option
 {
     uint8_t displayUsage;
     uint8_t noLookup;
-    uint8_t useUdp;
-    uint8_t useIcmp;
-    uint8_t useTcp;
+    int32_t protocol;
     int32_t nbProbes;
     int32_t startTtl;
     int32_t maxTtl;
@@ -65,6 +56,7 @@ typedef struct s_option
 typedef struct s_dest
 {
     char const *toTrace;
+    int32_t protocol;
     struct addrinfo *resolvedAddr;
     struct addrinfo *addrDest;
     char ip[INET_ADDRSTRLEN];
@@ -88,7 +80,6 @@ typedef struct s_probes
     uint8_t sendBuffer[USHRT_MAX];
     t_response response[MAX_PROBES];
     uint8_t shouldStop;
-    fd_set fdSet;
 } t_probes;
 
 typedef struct s_env
@@ -110,18 +101,8 @@ uint8_t processResponse(t_probes *probes,
                         int64_t recvBytes,
                         uint64_t recvTime);
 
-// icmp_socket.c
-uint8_t initIcmpSocket(t_probes *socketList);
-
-// icmp_loop.c
-void icmpLoop(t_env *e);
-
-// icmp_header.c
-void setIcmpPacket(uint8_t *buff,
-                   t_dest const *dest,
-                   uint16_t packetSize,
-                   uint16_t seq,
-                   uint16_t ttl);
+// loop.c
+void loop(t_env *e);
 
 // utility.c
 uint64_t getCurrentTime();
@@ -139,17 +120,14 @@ uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
 uint8_t checkIpHdrChecksum(struct iphdr *ipHdr, int64_t recvBytes);
 uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 
-// udp_socket.c
-uint8_t initUdpSocket(t_probes *socketList);
+// socket.c
+uint8_t initRawSocket(t_probes *socketList);
+uint8_t initIcmpSocket(t_probes *socketList);
 
-// udp_loop.c
-void udpLoop(t_env *e);
-
-// udp_header.c
-void setUdpPacket(uint8_t *buff,
-                  t_dest const *dest,
-                  uint16_t packetSize,
-                  uint16_t port,
-                  uint16_t ttl);
-
+// header.c
+void setPacket(uint8_t *buff,
+               t_dest const *dest,
+               uint16_t packetSize,
+               uint16_t port,
+               uint16_t ttl);
 #endif

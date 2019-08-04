@@ -28,13 +28,9 @@ parseMulti(t_option *opt, char const *arg, uint64_t len)
         } else if (arg[i] == 'n') {
             opt->noLookup = TRUE;
         } else if (arg[i] == 'I') {
-            opt->useTcp = FALSE;
-            opt->useUdp = FALSE;
-            opt->useIcmp = TRUE;
+            opt->protocol = IPPROTO_ICMP;
         } else if (arg[i] == 'T') {
-            opt->useUdp = FALSE;
-            opt->useIcmp = FALSE;
-            opt->useTcp = TRUE;
+            opt->protocol = IPPROTO_TCP;
         }
     }
     return (FALSE);
@@ -118,14 +114,12 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
 {
     *opt = (t_option){ FALSE,
                        FALSE,
-                       TRUE,
-                       FALSE,
-                       FALSE,
+                       IPPROTO_UDP,
                        DEFAULT_NUMBER_OF_PROBES,
                        DEFAULT_START_TTL,
                        DEFAULT_MAX_TTL,
                        DEFAULT_PACKET_SIZE,
-                       DEFAULT_PORT,
+                       DEFAULT_OPT_PORT,
                        NULL };
 
     if (argc == 1) {
@@ -144,7 +138,19 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
         return;
     }
     opt->toTrace = argv[argc - 1];
-    if (opt->useIcmp && opt->packetSize < MIN_ICMP_SIZE) {
-        opt->packetSize = MIN_ICMP_SIZE;
+    if (opt->protocol == IPPROTO_ICMP) {
+        if (opt->packetSize < MIN_ICMP_SIZE) {
+            opt->packetSize = MIN_ICMP_SIZE;
+        }
+        if (opt->port == DEFAULT_OPT_PORT) {
+            opt->port = DEFAULT_SEQ;
+        }
+    } else if (opt->protocol == IPPROTO_UDP) {
+        if (opt->packetSize < MIN_UDP_SIZE) {
+            opt->packetSize = MIN_ICMP_SIZE;
+        }
+        if (opt->port == DEFAULT_OPT_PORT) {
+            opt->port = DEFAULT_UDP_PORT;
+        }
     }
 }
