@@ -41,9 +41,10 @@ printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup)
         char fqdn[NI_MAXHOST] = { 0 };
         char ip[INET_ADDRSTRLEN] = { 0 };
 
-        if ((!i || memcmp(&probes->response[sameDest].addr,
-                          &probes->response[i].addr,
-                          sizeof(struct sockaddr_in))) &&
+        if (((!i || memcmp(&probes->response[sameDest].addr,
+                           &probes->response[i].addr,
+                           sizeof(struct sockaddr_in))) &&
+             (probes->endTime[i] - probes->startTime[i])) &&
             probes->response[i].addr.sin_addr.s_addr) {
             sameDest = i;
             inet_ntop(AF_INET,

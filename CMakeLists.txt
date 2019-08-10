@@ -11,7 +11,8 @@ add_executable(ft_traceroute
 		srcs/utility.c
 		srcs/display.c
 		srcs/checksum.c
-		srcs/socket.c)
+		srcs/socket.c
+		srcs/process_response.c)
 target_include_directories(ft_traceroute PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/includes)
 target_compile_options(ft_traceroute PRIVATE -Wall -Wextra -Werror -std=gnu11 -march=native -flto)

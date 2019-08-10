@@ -7,7 +7,10 @@ cleanEnv(t_env *e)
         close(e->probes.sendSocket);
     }
     if (e->probes.listenSocket > 2) {
-        close(e->probes.sendSocket);
+        close(e->probes.listenSocket);
+    }
+    if (e->probes.tcpListenSocket > 2) {
+        close(e->probes.tcpListenSocket);
     }
     if (e->dest.resolvedAddr) {
         freeaddrinfo(e->dest.resolvedAddr);
@@ -69,7 +72,15 @@ main(int32_t argc, char const **argv)
         cleanEnv(&e);
         return (EXIT_FAIL);
     }
-    loop(&e);
+    if (e.opt.protocol == IPPROTO_TCP) {
+        if (initTcpSocket(&e.probes)) {
+            cleanEnv(&e);
+            return (EXIT_FAIL);
+        }
+        tcpLoop(&e);
+    } else {
+        loop(&e);
+    }
     cleanEnv(&e);
     return (EXIT_OK);
 }

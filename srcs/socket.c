@@ -1,10 +1,31 @@
 #include "ft_traceroute.h"
 
 uint8_t
+initTcpSocket(t_probes *socketList)
+{
+    struct timeval timeout = { 1, 0 };
+
+    if ((socketList->tcpListenSocket = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) <
+        3) {
+        printf("ft_traceroute : Error initializing socket\n");
+        return (TRUE);
+    }
+    // Timeout
+    if (setsockopt(socketList->tcpListenSocket,
+                   SOL_SOCKET,
+                   SO_RCVTIMEO,
+                   &timeout,
+                   sizeof(struct timeval))) {
+        printf("ft_traceroute: Error setting timeout params\n");
+        return (TRUE);
+    }
+    return (FALSE);
+}
+
+uint8_t
 initRawSocket(t_probes *socketList)
 {
-    if ((socketList->sendSocket = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) <
-        3) {
+    if ((socketList->sendSocket = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 3) {
         printf("ft_traceroute : Error initializing socket\n");
         return (TRUE);
     }

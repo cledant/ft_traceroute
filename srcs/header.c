@@ -1,12 +1,12 @@
 #include "ft_traceroute.h"
 
 static inline void
-setTcpHeader(struct tcphdr *tcpHdr, uint16_t port)
+setTcpHeader(struct tcphdr *tcpHdr, uint16_t port, uint32_t seq)
 {
     memset(tcpHdr, 0, sizeof(struct tcphdr));
     tcpHdr->th_sport = 0;
     tcpHdr->th_dport = swapUint16(port);
-    tcpHdr->th_seq = htonl(getpid());
+    tcpHdr->th_seq = swapUint32(getpid() + seq);
     tcpHdr->th_off = 5;
     tcpHdr->th_flags = TH_SYN;
     tcpHdr->th_win = swapUint16(MAX_TCP_WINDOW_SIZE);
@@ -56,7 +56,7 @@ void
 setPacket(uint8_t *buff,
           t_dest const *dest,
           uint16_t packetSize,
-          uint16_t seq,
+          uint32_t seq,
           uint16_t ttl)
 {
     struct iphdr *ipHdr = (struct iphdr *)buff;
@@ -85,7 +85,7 @@ setPacket(uint8_t *buff,
         if (packetSize > MIN_TCP_SIZE) {
             memset(msg, 42, packetSize - MIN_TCP_SIZE);
         }
-        setTcpHeader(tcpHdr, dest->tcpPort);
+        setTcpHeader(tcpHdr, dest->tcpPort, seq);
         tcpHdr->check = computeTcpChecksum(tcpHdr,
                                            msg,
                                            packetSize - MIN_TCP_SIZE,

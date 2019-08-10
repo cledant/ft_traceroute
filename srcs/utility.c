@@ -21,6 +21,13 @@ swapUint16(uint16_t val)
     return ((val << 8) | (val >> 8));
 }
 
+inline uint32_t
+swapUint32(uint32_t val)
+{
+    return ((val << 24) | (val << 8 & 0x00FF0000) | (val >> 8 & 0x0000FF00) |
+            (val >> 24 & 0x000000FF));
+}
+
 void
 setupRespBuffer(t_response *resp)
 {

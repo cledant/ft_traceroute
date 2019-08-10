@@ -14,11 +14,11 @@ checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes)
 }
 
 inline uint8_t
-checkIpHdrChecksum(struct iphdr *ipHdr, int64_t recvBytes)
+checkIpHdrChecksum(struct iphdr *ipHdr)
 {
     uint16_t recvChecksum = ipHdr->check;
     ipHdr->check = 0;
-    ipHdr->check = computeChecksum((uint16_t *)ipHdr, recvBytes);
+    ipHdr->check = computeChecksum((uint16_t *)ipHdr, sizeof(struct iphdr));
     if (ipHdr->check == recvChecksum) {
         return (FALSE);
     }

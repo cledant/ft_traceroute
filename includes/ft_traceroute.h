@@ -88,6 +88,7 @@ typedef struct s_probes
     uint64_t nbProbes;
     int32_t sendSocket;
     int32_t listenSocket;
+    int32_t tcpListenSocket;
     uint64_t startTime[MAX_PROBES];
     uint64_t endTime[MAX_PROBES];
     uint8_t sendBuffer[USHRT_MAX];
@@ -108,19 +109,29 @@ void parseOptions(t_option *opt, int32_t argc, char const **argv);
 // utility_network.c
 uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
 struct addrinfo *resolveAddr(char const *addr);
+
+// process_response.c
 uint8_t processResponse(t_probes *probes,
                         uint64_t probeIdx,
                         uint64_t curSeq,
                         int64_t recvBytes,
                         uint64_t recvTime);
+uint8_t processTcpResponse(t_probes *probes,
+                           t_dest const *dest,
+                           uint64_t probeIdx,
+                           uint32_t curSeq,
+                           int64_t recvBytes,
+                           uint64_t recvTime);
 
 // loop.c
+void tcpLoop(t_env *e);
 void loop(t_env *e);
 
 // utility.c
 uint64_t getCurrentTime();
 uint64_t convertTime(struct timeval const *ts);
 uint16_t swapUint16(uint16_t val);
+uint32_t swapUint32(uint32_t val);
 void setupRespBuffer(t_response *resp);
 
 // display.c
@@ -130,7 +141,7 @@ void printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup);
 
 // checksum.c
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
-uint8_t checkIpHdrChecksum(struct iphdr *ipHdr, int64_t recvBytes);
+uint8_t checkIpHdrChecksum(struct iphdr *ipHdr);
 uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 uint16_t computeTcpChecksum(struct tcphdr const *tcpHdr,
                             uint8_t const *data,
@@ -138,6 +149,7 @@ uint16_t computeTcpChecksum(struct tcphdr const *tcpHdr,
                             char const *destIp);
 
 // socket.c
+uint8_t initTcpSocket(t_probes *socketList);
 uint8_t initRawSocket(t_probes *socketList);
 uint8_t initIcmpSocket(t_probes *socketList);
 
@@ -145,6 +157,6 @@ uint8_t initIcmpSocket(t_probes *socketList);
 void setPacket(uint8_t *buff,
                t_dest const *dest,
                uint16_t packetSize,
-               uint16_t port,
+               uint32_t seq,
                uint16_t ttl);
 #endif
