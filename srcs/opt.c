@@ -147,10 +147,17 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
         }
     } else if (opt->protocol == IPPROTO_UDP) {
         if (opt->packetSize < MIN_UDP_SIZE) {
-            opt->packetSize = MIN_ICMP_SIZE;
+            opt->packetSize = MIN_UDP_SIZE;
         }
         if (opt->port == DEFAULT_OPT_PORT) {
             opt->port = DEFAULT_UDP_PORT;
+        }
+    } else {
+        if (opt->packetSize < MIN_TCP_SIZE) {
+            opt->packetSize = MIN_TCP_SIZE;
+        }
+        if (opt->port == DEFAULT_OPT_PORT) {
+            opt->port = DEFAULT_TCP_PORT;
         }
     }
 }

@@ -43,3 +43,24 @@ computeChecksum(uint16_t const *ptr, uint16_t packetSize)
     checksum += (checksum >> 16);
     return (~checksum);
 }
+
+inline uint16_t
+computeTcpChecksum(struct tcphdr const *tcpHdr,
+                   uint8_t const *data,
+                   uint16_t dataSize,
+                   char const *destIp)
+{
+    uint8_t buff[USHRT_MAX] = { 0 };
+    t_pseudoHdr *pHdr = (t_pseudoHdr *)buff;
+
+    pHdr->saddr = inet_addr("192.168.1.205");
+    pHdr->daddr = inet_addr(destIp);
+    pHdr->zeros = 0;
+    pHdr->protocol = IPPROTO_TCP;
+    pHdr->len = swapUint16(sizeof(struct tcphdr) + dataSize);
+    memcpy(buff + sizeof(t_pseudoHdr), tcpHdr, sizeof(struct tcphdr));
+    memcpy(buff + sizeof(t_pseudoHdr) + sizeof(struct tcphdr), data, dataSize);
+    return (
+      computeChecksum((uint16_t *)buff,
+                      sizeof(t_pseudoHdr) + sizeof(struct tcphdr) + dataSize));
+}

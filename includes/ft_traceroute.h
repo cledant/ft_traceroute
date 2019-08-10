@@ -31,6 +31,7 @@
 #define DEFAULT_PACKET_SIZE 60
 #define DEFAULT_OPT_PORT -1
 #define DEFAULT_UDP_PORT 33434
+#define DEFAULT_TCP_PORT 80
 #define DEFAULT_SEQ 0
 #define NBR_OPTION 9
 #define MAX_PROBES 10
@@ -39,6 +40,17 @@
 #define MAX_PACKET_SIZE 65000
 #define MIN_ICMP_SIZE (uint8_t)(sizeof(struct icmphdr) + sizeof(struct iphdr))
 #define MIN_UDP_SIZE (uint8_t)(sizeof(struct udphdr) + sizeof(struct iphdr))
+#define MIN_TCP_SIZE (uint8_t)(sizeof(struct tcphdr) + sizeof(struct iphdr))
+#define MAX_TCP_WINDOW_SIZE 5820
+
+typedef struct s_pseudoHdr
+{
+    uint32_t saddr;
+    uint32_t daddr;
+    uint8_t zeros;
+    uint8_t protocol;
+    uint16_t len;
+} t_pseudoHdr;
 
 typedef struct s_option
 {
@@ -56,6 +68,7 @@ typedef struct s_option
 typedef struct s_dest
 {
     char const *toTrace;
+    uint8_t tcpPort;
     int32_t protocol;
     struct addrinfo *resolvedAddr;
     struct addrinfo *addrDest;
@@ -119,6 +132,10 @@ void printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup);
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
 uint8_t checkIpHdrChecksum(struct iphdr *ipHdr, int64_t recvBytes);
 uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
+uint16_t computeTcpChecksum(struct tcphdr const *tcpHdr,
+                            uint8_t const *data,
+                            uint16_t dataSize,
+                            char const *destIp);
 
 // socket.c
 uint8_t initRawSocket(t_probes *socketList);

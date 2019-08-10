@@ -1,6 +1,18 @@
 #include "ft_traceroute.h"
 
 static inline void
+setTcpHeader(struct tcphdr *tcpHdr, uint16_t port)
+{
+    memset(tcpHdr, 0, sizeof(struct tcphdr));
+    tcpHdr->th_sport = 0;
+    tcpHdr->th_dport = swapUint16(port);
+    tcpHdr->th_seq = htonl(getpid());
+    tcpHdr->th_off = 5;
+    tcpHdr->th_flags = TH_SYN;
+    tcpHdr->th_win = swapUint16(MAX_TCP_WINDOW_SIZE);
+}
+
+static inline void
 setUdpHeader(struct udphdr *udpHdr, uint16_t port, uint16_t udpMsgSize)
 {
     udpHdr->source = 0;
@@ -66,6 +78,18 @@ setPacket(uint8_t *buff,
             memset(msg, 42, packetSize - MIN_UDP_SIZE);
         }
         setUdpHeader(udpHdr, seq, packetSize - sizeof(struct iphdr));
+    } else {
+        struct tcphdr *tcpHdr = (struct tcphdr *)(buff + sizeof(struct iphdr));
+        uint8_t *msg = (uint8_t *)tcpHdr + sizeof(struct tcphdr);
+
+        if (packetSize > MIN_TCP_SIZE) {
+            memset(msg, 42, packetSize - MIN_TCP_SIZE);
+        }
+        setTcpHeader(tcpHdr, dest->tcpPort);
+        tcpHdr->check = computeTcpChecksum(tcpHdr,
+                                           msg,
+                                           packetSize - MIN_TCP_SIZE,
+                                           dest->ip);
     }
     setIpHdr(ipHdr, ttl, packetSize, dest);
 }

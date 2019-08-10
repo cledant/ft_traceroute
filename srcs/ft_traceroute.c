@@ -52,6 +52,7 @@ main(int32_t argc, char const **argv)
     }
     e.dest.toTrace = e.opt.toTrace;
     e.dest.protocol = e.opt.protocol;
+    e.dest.tcpPort = e.opt.port;
     e.probes.nbProbes = e.opt.nbProbes;
     if (resolveAddrToPing(&e.dest)) {
         cleanEnv(&e);

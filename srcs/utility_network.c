@@ -50,22 +50,18 @@ processResponse(t_probes *probes,
                 int64_t recvBytes,
                 uint64_t recvTime)
 {
+    struct iphdr *ipHdr = (struct iphdr *)probes->response[probeIdx].iovecBuff;
+
+    if (recvBytes < 0 || checkIpHdrChecksum(ipHdr, recvBytes)) {
+        return (checkTimeout(probes, probeIdx));
+    }
     struct icmphdr *icmpHdr =
       (struct icmphdr *)(probes->response[probeIdx].iovecBuff +
                          sizeof(struct iphdr));
     struct iphdr *err =
       (struct iphdr *)(probes->response[probeIdx].iovecBuff + MIN_ICMP_SIZE);
 
-    if (recvBytes < 0) {
-        if (swapUint16(err->id) == getpid()) {
-            probes->endTime[probeIdx] = probes->startTime[probeIdx];
-            return (TRUE);
-        }
-        return (checkTimeout(probes, probeIdx));
-    }
-    if (checkIpHdrChecksum((struct iphdr *)probes->response[probeIdx].iovecBuff,
-                           recvBytes) ||
-        checkIcmpHdrChecksum(icmpHdr, recvBytes)) {
+    if (checkIcmpHdrChecksum(icmpHdr, recvBytes)) {
         return (checkTimeout(probes, probeIdx));
     }
     if (icmpHdr->type == ICMP_DEST_UNREACH) {
