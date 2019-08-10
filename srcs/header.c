@@ -86,10 +86,12 @@ setPacket(uint8_t *buff,
             memset(msg, 42, packetSize - MIN_TCP_SIZE);
         }
         setTcpHeader(tcpHdr, dest->tcpPort, seq);
-        tcpHdr->check = computeTcpChecksum(tcpHdr,
-                                           msg,
-                                           packetSize - MIN_TCP_SIZE,
-                                           dest->ip);
+        tcpHdr->check = computeTcpChecksum(
+          tcpHdr,
+          msg,
+          packetSize - MIN_TCP_SIZE,
+          dest->sourceIp,
+          ((struct sockaddr_in *)(dest->addrDest->ai_addr))->sin_addr.s_addr);
     }
     setIpHdr(ipHdr, ttl, packetSize, dest);
 }

@@ -1,6 +1,6 @@
 #include "ft_traceroute.h"
 
-static inline uint8_t
+inline uint8_t
 checkTimeout(t_probes *probes, uint64_t probeIdx)
 {
     if ((getCurrentTime() - probes->startTime[probeIdx]) > SEC_IN_US) {
@@ -23,10 +23,10 @@ processResponse(t_probes *probes,
         return (checkTimeout(probes, probeIdx));
     }
     struct icmphdr *icmpHdr =
-                     (struct icmphdr *)(probes->response[probeIdx].iovecBuff +
-                                        sizeof(struct iphdr));
+      (struct icmphdr *)(probes->response[probeIdx].iovecBuff +
+                         sizeof(struct iphdr));
     struct iphdr const *err =
-                     (struct iphdr *)(probes->response[probeIdx].iovecBuff + MIN_ICMP_SIZE);
+      (struct iphdr *)(probes->response[probeIdx].iovecBuff + MIN_ICMP_SIZE);
 
     if (checkIcmpHdrChecksum(icmpHdr, recvBytes)) {
         return (checkTimeout(probes, probeIdx));
@@ -72,9 +72,17 @@ processTcpResponse(t_probes *probes,
         return (checkTimeout(probes, probeIdx));
     }
     struct tcphdr *tcpHdr =
-                    (struct tcphdr *)(probes->response[probeIdx].iovecBuff +
-                                      sizeof(struct iphdr));
-    if (ipHdr->saddr != inet_addr(dest->ip)) {
+      (struct tcphdr *)(probes->response[probeIdx].iovecBuff +
+                        sizeof(struct iphdr));
+
+    if (checkTcpHdrChecksum(tcpHdr, ipHdr, recvBytes)) {
+        return (checkTimeout(probes, probeIdx));
+    }
+    if (ipHdr->saddr !=
+        ((struct sockaddr_in *)(dest->addrDest->ai_addr))->sin_addr.s_addr) {
+        return (checkTimeout(probes, probeIdx));
+    }
+    if (tcpHdr->th_flags != (TH_ACK | TH_SYN)) {
         return (checkTimeout(probes, probeIdx));
     }
     if (tcpHdr->th_ack == swapUint32(getpid() + curSeq + 1)) {

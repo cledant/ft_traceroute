@@ -73,6 +73,10 @@ main(int32_t argc, char const **argv)
         return (EXIT_FAIL);
     }
     if (e.opt.protocol == IPPROTO_TCP) {
+        if (getSourceIp(&e)) {
+            cleanEnv(&e);
+            return (EXIT_FAIL);
+        }
         if (initTcpSocket(&e.probes)) {
             cleanEnv(&e);
             return (EXIT_FAIL);

@@ -1,8 +1,32 @@
 #include "ft_traceroute.h"
 
 inline uint8_t
+checkTcpHdrChecksum(struct tcphdr *tcpHdr,
+                    struct iphdr const *ipHdr,
+                    int64_t recvBytes)
+{
+    if (recvBytes < MIN_TCP_SIZE) {
+        return (FALSE);
+    }
+    uint16_t recvChecksum = tcpHdr->th_sum;
+    tcpHdr->th_sum = 0;
+    tcpHdr->th_sum = computeTcpChecksum(tcpHdr,
+                                        (uint8_t *)ipHdr + MIN_TCP_SIZE,
+                                        recvBytes - MIN_TCP_SIZE,
+                                        ipHdr->saddr,
+                                        ipHdr->daddr);
+    if (tcpHdr->th_sum == recvChecksum) {
+        return (FALSE);
+    }
+    return (TRUE);
+}
+
+inline uint8_t
 checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes)
 {
+    if (recvBytes < MIN_ICMP_SIZE) {
+        return (FALSE);
+    }
     uint16_t recvChecksum = icmpHdr->checksum;
     icmpHdr->checksum = 0;
     icmpHdr->checksum =
@@ -48,18 +72,22 @@ inline uint16_t
 computeTcpChecksum(struct tcphdr const *tcpHdr,
                    uint8_t const *data,
                    uint16_t dataSize,
-                   char const *destIp)
+                   uint32_t srcIp,
+                   uint32_t destIp)
 {
     uint8_t buff[USHRT_MAX] = { 0 };
     t_pseudoHdr *pHdr = (t_pseudoHdr *)buff;
 
-    pHdr->saddr = inet_addr("192.168.1.205");
-    pHdr->daddr = inet_addr(destIp);
+    pHdr->saddr = srcIp;
+    pHdr->daddr = destIp;
     pHdr->zeros = 0;
     pHdr->protocol = IPPROTO_TCP;
     pHdr->len = swapUint16(sizeof(struct tcphdr) + dataSize);
     memcpy(buff + sizeof(t_pseudoHdr), tcpHdr, sizeof(struct tcphdr));
-    memcpy(buff + sizeof(t_pseudoHdr) + sizeof(struct tcphdr), data, dataSize);
+    if (dataSize && data) {
+        memcpy(
+          buff + sizeof(t_pseudoHdr) + sizeof(struct tcphdr), data, dataSize);
+    }
     return (
       computeChecksum((uint16_t *)buff,
                       sizeof(t_pseudoHdr) + sizeof(struct tcphdr) + dataSize));

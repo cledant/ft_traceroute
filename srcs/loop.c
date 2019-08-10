@@ -28,14 +28,18 @@ tcpLoop(t_env *e)
                                        e->dest.addrDest->ai_addr,
                                        e->dest.addrDest->ai_addrlen);
             if (sendBytes < e->opt.packetSize) {
-                printf("ft_traceroute: error sending pakcet\n");
+                printf("ft_traceroute: error sending packet\n");
                 return;
             }
             while (1) {
                 int64_t recvBytes = recvmsg(
                   e->probes.tcpListenSocket, &e->probes.response[i].msgHdr, 0);
-                if (processTcpResponse(
-                  &e->probes, &e->dest, i, curSeq, recvBytes, getCurrentTime())) {
+                if (processTcpResponse(&e->probes,
+                                       &e->dest,
+                                       i,
+                                       curSeq,
+                                       recvBytes,
+                                       getCurrentTime())) {
                     break;
                 }
             }
@@ -75,7 +79,7 @@ loop(t_env *e)
                                        e->dest.addrDest->ai_addr,
                                        e->dest.addrDest->ai_addrlen);
             if (sendBytes < e->opt.packetSize) {
-                printf("ft_traceroute: error sending pakcet\n");
+                printf("ft_traceroute: error sending packet\n");
                 return;
             }
             while (1) {

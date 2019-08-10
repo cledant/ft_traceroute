@@ -72,6 +72,7 @@ typedef struct s_dest
     int32_t protocol;
     struct addrinfo *resolvedAddr;
     struct addrinfo *addrDest;
+    int32_t sourceIp;
     char ip[INET_ADDRSTRLEN];
 } t_dest;
 
@@ -111,6 +112,7 @@ uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
 struct addrinfo *resolveAddr(char const *addr);
 
 // process_response.c
+uint8_t checkTimeout(t_probes *probes, uint64_t probeIdx);
 uint8_t processResponse(t_probes *probes,
                         uint64_t probeIdx,
                         uint64_t curSeq,
@@ -140,13 +142,17 @@ void printIcmpHdr(struct icmphdr const *icmpHdr);
 void printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup);
 
 // checksum.c
+uint8_t checkTcpHdrChecksum(struct tcphdr *tcpHdr,
+                            struct iphdr const *ipHdr,
+                            int64_t recvBytes);
 uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
 uint8_t checkIpHdrChecksum(struct iphdr *ipHdr);
 uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 uint16_t computeTcpChecksum(struct tcphdr const *tcpHdr,
                             uint8_t const *data,
                             uint16_t dataSize,
-                            char const *destIp);
+                            uint32_t srcIp,
+                            uint32_t destIp);
 
 // socket.c
 uint8_t initTcpSocket(t_probes *socketList);
@@ -159,4 +165,8 @@ void setPacket(uint8_t *buff,
                uint16_t packetSize,
                uint32_t seq,
                uint16_t ttl);
+
+// get_source_ip.c
+uint8_t getSourceIp(t_env *e);
+
 #endif
