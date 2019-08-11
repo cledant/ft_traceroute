@@ -32,6 +32,7 @@
 #define DEFAULT_OPT_PORT -1
 #define DEFAULT_UDP_PORT 33434
 #define DEFAULT_TCP_PORT 80
+#define TCP_SOURCE_PORT 4242
 #define DEFAULT_SEQ 0
 #define NBR_OPTION 9
 #define MAX_PROBES 10
@@ -113,11 +114,11 @@ struct addrinfo *resolveAddr(char const *addr);
 
 // process_response.c
 uint8_t checkTimeout(t_probes *probes, uint64_t probeIdx);
-uint8_t processResponse(t_probes *probes,
-                        uint64_t probeIdx,
-                        uint64_t curSeq,
-                        int64_t recvBytes,
-                        uint64_t recvTime);
+uint8_t processIcmpResponse(t_probes *probes,
+                            uint64_t probeIdx,
+                            uint64_t curSeq,
+                            int64_t recvBytes,
+                            uint64_t recvTime);
 uint8_t processTcpResponse(t_probes *probes,
                            t_dest const *dest,
                            uint64_t probeIdx,

@@ -3,7 +3,7 @@
 uint8_t
 initTcpSocket(t_probes *socketList)
 {
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 1 };
 
     if ((socketList->tcpListenSocket = socket(AF_INET, SOCK_RAW, IPPROTO_TCP)) <
         3) {
@@ -36,7 +36,7 @@ uint8_t
 initIcmpSocket(t_probes *socketList)
 {
     uint8_t set = 1;
-    struct timeval timeout = { 1, 0 };
+    struct timeval timeout = { 0, 1 };
 
     if ((socketList->listenSocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) <
         3) {

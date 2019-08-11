@@ -11,11 +11,11 @@ checkTimeout(t_probes *probes, uint64_t probeIdx)
 }
 
 uint8_t
-processResponse(t_probes *probes,
-                uint64_t probeIdx,
-                uint64_t curSeq,
-                int64_t recvBytes,
-                uint64_t recvTime)
+processIcmpResponse(t_probes *probes,
+                    uint64_t probeIdx,
+                    uint64_t curSeq,
+                    int64_t recvBytes,
+                    uint64_t recvTime)
 {
     struct iphdr *ipHdr = (struct iphdr *)probes->response[probeIdx].iovecBuff;
 
@@ -87,6 +87,7 @@ processTcpResponse(t_probes *probes,
     }
     if (tcpHdr->th_ack == swapUint32(getpid() + curSeq + 1)) {
         probes->endTime[probeIdx] = recvTime;
+        probes->shouldStop = TRUE;
         return (TRUE);
     }
     return (checkTimeout(probes, probeIdx));

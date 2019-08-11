@@ -4,7 +4,7 @@ static inline void
 setTcpHeader(struct tcphdr *tcpHdr, uint16_t port, uint32_t seq)
 {
     memset(tcpHdr, 0, sizeof(struct tcphdr));
-    tcpHdr->th_sport = 0;
+    tcpHdr->th_sport = swapUint16(TCP_SOURCE_PORT + seq);;
     tcpHdr->th_dport = swapUint16(port);
     tcpHdr->th_seq = swapUint32(getpid() + seq);
     tcpHdr->th_off = 5;
