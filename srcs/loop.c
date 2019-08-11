@@ -12,7 +12,7 @@ tcpLoop(t_env *e)
            e->opt.packetSize);
     for (uint64_t curTtl = e->opt.startTtl; curTtl < (uint64_t)e->opt.maxTtl + 1;
          ++curTtl) {
-        uint8_t icmpTimeout = FALSE;
+        uint8_t icmpTimeout = 0;
 
         for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
             setPacket(e->probes.sendBuffer,
@@ -38,14 +38,14 @@ tcpLoop(t_env *e)
                 if (processIcmpResponse(
                       &e->probes, i, curSeq, recvBytes, getCurrentTime())) {
                     if (getCurrentTime() - e->probes.startTime[i] > SEC_IN_US) {
-                        icmpTimeout = TRUE;
+                        icmpTimeout += 1;
                     }
                     break;
                 }
             }
             ++curSeq;
         }
-        if (icmpTimeout) {
+        if (icmpTimeout == e->probes.nbProbes) {
             for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
                 setPacket(e->probes.sendBuffer,
                           &e->dest,
