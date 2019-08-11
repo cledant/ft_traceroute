@@ -81,10 +81,8 @@ main(int32_t argc, char const **argv)
             cleanEnv(&e);
             return (EXIT_FAIL);
         }
-        tcpLoop(&e);
-    } else {
-        loop(&e);
     }
+    loop(&e);
     cleanEnv(&e);
     return (EXIT_OK);
 }

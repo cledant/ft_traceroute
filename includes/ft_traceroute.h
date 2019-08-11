@@ -127,7 +127,6 @@ uint8_t processTcpResponse(t_probes *probes,
                            uint64_t recvTime);
 
 // loop.c
-void tcpLoop(t_env *e);
 void loop(t_env *e);
 
 // utility.c
