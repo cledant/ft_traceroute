@@ -1,6 +1,6 @@
 #include "ft_traceroute.h"
 
-static inline void
+static inline uint8_t
 tcpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq)
 {
     for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
@@ -16,7 +16,7 @@ tcpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq)
                                    e->dest.addrDest->ai_addrlen);
         if (sendBytes < e->opt.packetSize) {
             printf("ft_traceroute: error sending packet\n");
-            return;
+            return (TRUE);
         }
         while (1) {
             int64_t recvBytes = recvmsg(
@@ -32,9 +32,10 @@ tcpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq)
         }
         ++(*curSeq);
     }
+    return (FALSE);
 }
 
-static inline void
+static inline uint8_t
 icmpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq, uint8_t *icmpTimeout)
 {
     for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
@@ -50,7 +51,7 @@ icmpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq, uint8_t *icmpTimeout)
                                    e->dest.addrDest->ai_addrlen);
         if (sendBytes < e->opt.packetSize) {
             printf("ft_traceroute: error sending packet\n");
-            return;
+            return (TRUE);
         }
         while (1) {
             int64_t recvBytes =
@@ -65,6 +66,7 @@ icmpLoop(t_env *e, uint64_t curTtl, uint64_t *curSeq, uint8_t *icmpTimeout)
         }
         ++(*curSeq);
     }
+    return (FALSE);
 }
 
 void
@@ -77,14 +79,19 @@ loop(t_env *e)
            e->dest.ip,
            e->opt.maxTtl,
            e->opt.packetSize);
-    for (uint64_t curTtl = e->opt.startTtl; curTtl < (uint64_t)e->opt.maxTtl;
+    for (uint64_t curTtl = e->opt.startTtl;
+         curTtl < (uint64_t)e->opt.maxTtl + 1;
          ++curTtl) {
         uint8_t icmpTimeout = 0;
 
-        icmpLoop(e, curTtl, &curSeq, &icmpTimeout);
+        if (icmpLoop(e, curTtl, &curSeq, &icmpTimeout)) {
+            return;
+        }
         if (e->opt.protocol == IPPROTO_TCP &&
             icmpTimeout == e->probes.nbProbes) {
-            tcpLoop(e, curTtl, &curSeq);
+            if (tcpLoop(e, curTtl, &curSeq)) {
+                return;
+            }
         }
         printLoopStats(&e->probes, curTtl, e->opt.noLookup);
         if (e->probes.shouldStop) {

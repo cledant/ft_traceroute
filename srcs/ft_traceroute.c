@@ -79,6 +79,11 @@ main(int32_t argc, char const **argv)
         displayUsage();
         return (EXIT_OK);
     }
+    if (e.opt.startTtl > e.opt.maxTtl) {
+        printf("ft_traceroute: start ttl out of range\n");
+        displayUsage();
+        return (EXIT_FAIL);
+    }
     e.dest.toTrace = e.opt.toTrace;
     e.dest.protocol = e.opt.protocol;
     e.dest.tcpPort = e.opt.port;

@@ -9,18 +9,18 @@ setValue(int32_t *var,
 {
     if (val < min || val > max) {
         printf("ft_traceroute: %s: %d\n", errorMsg, val);
-        return (FALSE);
+        return (0);
     }
     *var = val;
-    return (TRUE);
+    return (1);
 }
 
 static uint8_t
 parseMulti(t_option *opt, char const *arg, uint64_t len)
 {
     if (arg[0] != '-') {
-        opt->displayUsage = 1;
-        return (FALSE);
+        opt->displayUsage = TRUE;
+        return (0);
     }
     for (uint64_t i = 1; i < len; ++i) {
         if (arg[i] == 'h') {
@@ -33,46 +33,65 @@ parseMulti(t_option *opt, char const *arg, uint64_t len)
             opt->protocol = IPPROTO_TCP;
         }
     }
-    return (FALSE);
+    return (0);
 }
 
 static uint8_t
 parseInt(t_option *opt, char const *nextArg, uint64_t i)
 {
     if (!nextArg) {
-        opt->displayUsage = 1;
-        return (FALSE);
+        opt->displayUsage = TRUE;
+        return (0);
     }
+    uint8_t off = 0;
     switch (i) {
         case 0:
-            return (setValue(&opt->nbProbes,
-                             atoi(nextArg),
-                             0,
-                             MAX_PROBES,
-                             "invalid probe value"));
+            if (!(off = setValue(&opt->nbProbes,
+                                 atoi(nextArg),
+                                 1,
+                                 MAX_PROBES,
+                                 "invalid probe value"))) {
+                opt->displayUsage = TRUE;
+            }
+            return (off);
         case 1:
-            return (setValue(&opt->startTtl,
-                             atoi(nextArg),
-                             1,
-                             MAX_TTL_VALUE,
-                             "invalid start ttl value"));
+            if (!(off = setValue(&opt->startTtl,
+                                 atoi(nextArg),
+                                 1,
+                                 MAX_TTL_VALUE,
+                                 "invalid start ttl value"))) {
+                opt->displayUsage = TRUE;
+            }
+            return (off);
         case 2:
-            return (setValue(&opt->maxTtl,
-                             atoi(nextArg),
-                             1,
-                             MAX_TTL_VALUE,
-                             "invalid max ttl value"));
+            if (!(off = setValue(&opt->maxTtl,
+                                 atoi(nextArg),
+                                 1,
+                                 MAX_TTL_VALUE,
+                                 "invalid max ttl value"))) {
+                opt->displayUsage = TRUE;
+            }
+            return (off);
         case 3:
-            return (setValue(
-              &opt->port, atoi(nextArg), 0, MAX_PORT, "invalid port value"));
+            if (!(off = setValue(&opt->port,
+                                 atoi(nextArg),
+                                 0,
+                                 MAX_PORT,
+                                 "invalid port value"))) {
+                opt->displayUsage = TRUE;
+            }
+            return (off);
         case 4:
-            return (setValue(&opt->packetSize,
-                             atoi(nextArg),
-                             0,
-                             MAX_PACKET_SIZE,
-                             "invalid packet size value"));
+            if (!(off = setValue(&opt->packetSize,
+                                 atoi(nextArg),
+                                 0,
+                                 MAX_PACKET_SIZE,
+                                 "invalid packet size value"))) {
+                opt->displayUsage = TRUE;
+            }
+            return (off);
         default:
-            return (FALSE);
+            return (0);
     }
 }
 
@@ -91,7 +110,7 @@ parseSingle(t_option *opt, char const *arg, char const *nextArgv)
             }
         }
     }
-    return (FALSE);
+    return (0);
 }
 
 static uint8_t
@@ -134,7 +153,7 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
         i += parseArg(opt, argv[i], nextPtr);
     }
     if (argv[argc - 1][0] == '-') {
-        opt->displayUsage = 1;
+        opt->displayUsage = TRUE;
         return;
     }
     opt->toTrace = argv[argc - 1];

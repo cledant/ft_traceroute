@@ -15,8 +15,8 @@ displayUsage()
     printf("\t-p : Port\n\tFor UDP probe : initial port and is incremented at "
            "each probe\n\tICMP probe : initial sequence value\n\tTCP probe : "
            "constant port value\n");
-    printf("\t-s : Packet size. From 0 to MTU value minus headers.\n\tMTU "
-           "value is usually 1500\n");
+    printf("\t-s : Packet size. From 0 to MTU value.\n\tMTU value is usually "
+           "1500\n");
 }
 
 void

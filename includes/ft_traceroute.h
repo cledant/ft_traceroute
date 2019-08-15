@@ -69,7 +69,7 @@ typedef struct s_option
 typedef struct s_dest
 {
     char const *toTrace;
-    uint8_t tcpPort;
+    uint16_t tcpPort;
     int32_t protocol;
     struct addrinfo *resolvedAddr;
     struct addrinfo *addrDest;
