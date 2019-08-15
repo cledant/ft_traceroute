@@ -4,7 +4,7 @@ static inline void
 setTcpHeader(struct tcphdr *tcpHdr, uint16_t port, uint32_t seq)
 {
     memset(tcpHdr, 0, sizeof(struct tcphdr));
-    tcpHdr->th_sport = swapUint16(TCP_SOURCE_PORT + seq);;
+    tcpHdr->th_sport = swapUint16(SOURCE_PORT + seq);
     tcpHdr->th_dport = swapUint16(port);
     tcpHdr->th_seq = swapUint32(getpid() + seq);
     tcpHdr->th_off = 5;
@@ -15,7 +15,7 @@ setTcpHeader(struct tcphdr *tcpHdr, uint16_t port, uint32_t seq)
 static inline void
 setUdpHeader(struct udphdr *udpHdr, uint16_t port, uint16_t udpMsgSize)
 {
-    udpHdr->source = 0;
+    udpHdr->source = swapUint16(SOURCE_PORT);
     udpHdr->dest = swapUint16(port);
     udpHdr->len = swapUint16(udpMsgSize);
     udpHdr->check = 0;
@@ -47,7 +47,7 @@ setIpHdr(struct iphdr *ipHdr,
     ipHdr->ttl = ttl;
     ipHdr->protocol = dest->protocol;
     ipHdr->check = 0;
-    ipHdr->saddr = 0;
+    ipHdr->saddr = dest->sourceIp;
     ipHdr->daddr =
       ((struct sockaddr_in *)dest->addrDest->ai_addr)->sin_addr.s_addr;
 }
@@ -78,6 +78,12 @@ setPacket(uint8_t *buff,
             memset(msg, 42, packetSize - MIN_UDP_SIZE);
         }
         setUdpHeader(udpHdr, seq, packetSize - sizeof(struct iphdr));
+        udpHdr->check = computeUdpChecksum(
+          udpHdr,
+          msg,
+          packetSize - MIN_UDP_SIZE,
+          dest->sourceIp,
+          ((struct sockaddr_in *)(dest->addrDest->ai_addr))->sin_addr.s_addr);
     } else {
         struct tcphdr *tcpHdr = (struct tcphdr *)(buff + sizeof(struct iphdr));
         uint8_t *msg = (uint8_t *)tcpHdr + sizeof(struct tcphdr);

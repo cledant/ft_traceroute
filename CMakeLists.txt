@@ -10,7 +10,8 @@ add_executable(ft_traceroute
 		srcs/header.c
 		srcs/utility.c
 		srcs/display.c
-		srcs/checksum.c
+		srcs/checksum_compute.c
+		srcs/checksum_check.c
 		srcs/socket.c
 		srcs/process_response.c
 		srcs/get_source_ip.c)

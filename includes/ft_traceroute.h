@@ -32,7 +32,7 @@
 #define DEFAULT_OPT_PORT -1
 #define DEFAULT_UDP_PORT 33434
 #define DEFAULT_TCP_PORT 80
-#define TCP_SOURCE_PORT 4242
+#define SOURCE_PORT 4242
 #define DEFAULT_SEQ 0
 #define NBR_OPTION 9
 #define MAX_PROBES 10
@@ -141,18 +141,25 @@ void displayUsage();
 void printIcmpHdr(struct icmphdr const *icmpHdr);
 void printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup);
 
-// checksum.c
-uint8_t checkTcpHdrChecksum(struct tcphdr *tcpHdr,
-                            struct iphdr const *ipHdr,
-                            int64_t recvBytes);
-uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
-uint8_t checkIpHdrChecksum(struct iphdr *ipHdr);
+// checksum_compute.c
 uint16_t computeChecksum(uint16_t const *ptr, uint16_t packetSize);
 uint16_t computeTcpChecksum(struct tcphdr const *tcpHdr,
                             uint8_t const *data,
                             uint16_t dataSize,
                             uint32_t srcIp,
                             uint32_t destIp);
+uint16_t computeUdpChecksum(struct udphdr const *udpHdr,
+                            uint8_t const *data,
+                            uint16_t dataSize,
+                            uint32_t srcIp,
+                            uint32_t destIp);
+
+// checksum_check.c
+uint8_t checkTcpHdrChecksum(struct tcphdr *tcpHdr,
+                            struct iphdr const *ipHdr,
+                            int64_t recvBytes);
+uint8_t checkIcmpHdrChecksum(struct icmphdr *icmpHdr, int64_t recvBytes);
+uint8_t checkIpHdrChecksum(struct iphdr *ipHdr);
 
 // socket.c
 uint8_t initTcpSocket(t_probes *socketList);

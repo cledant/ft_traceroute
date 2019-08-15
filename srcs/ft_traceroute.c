@@ -1,6 +1,6 @@
 #include "ft_traceroute.h"
 
-static void
+static inline void
 cleanEnv(t_env *e)
 {
     if (e->probes.sendSocket > 2) {
@@ -17,7 +17,7 @@ cleanEnv(t_env *e)
     }
 }
 
-static uint8_t
+static inline uint8_t
 resolveAddrToPing(t_dest *dest)
 {
     if (!(dest->resolvedAddr = resolveAddr(dest->toTrace))) {
@@ -34,6 +34,32 @@ resolveAddrToPing(t_dest *dest)
                    INET_ADDRSTRLEN)) {
         printf("ft_traceroute: Ip conversion failed\n");
         return (TRUE);
+    }
+    return (FALSE);
+}
+
+static inline uint8_t
+init_network(t_env *e)
+{
+    if (resolveAddrToPing(&e->dest)) {
+        return (TRUE);
+    }
+    for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
+        setupRespBuffer(&e->probes.response[i]);
+    }
+    if (initIcmpSocket(&e->probes)) {
+        return (TRUE);
+    }
+    if (initRawSocket(&e->probes)) {
+        return (TRUE);
+    }
+    if (getSourceIp(e)) {
+        return (TRUE);
+    }
+    if (e->opt.protocol == IPPROTO_TCP) {
+        if (initTcpSocket(&e->probes)) {
+            return (TRUE);
+        }
     }
     return (FALSE);
 }
@@ -57,30 +83,9 @@ main(int32_t argc, char const **argv)
     e.dest.protocol = e.opt.protocol;
     e.dest.tcpPort = e.opt.port;
     e.probes.nbProbes = e.opt.nbProbes;
-    if (resolveAddrToPing(&e.dest)) {
+    if (init_network(&e)) {
         cleanEnv(&e);
         return (EXIT_FAIL);
-    }
-    for (uint64_t i = 0; i < e.probes.nbProbes; ++i) {
-        setupRespBuffer(&e.probes.response[i]);
-    }
-    if (initIcmpSocket(&e.probes)) {
-        cleanEnv(&e);
-        return (EXIT_FAIL);
-    }
-    if (initRawSocket(&e.probes)) {
-        cleanEnv(&e);
-        return (EXIT_FAIL);
-    }
-    if (e.opt.protocol == IPPROTO_TCP) {
-        if (getSourceIp(&e)) {
-            cleanEnv(&e);
-            return (EXIT_FAIL);
-        }
-        if (initTcpSocket(&e.probes)) {
-            cleanEnv(&e);
-            return (EXIT_FAIL);
-        }
     }
     loop(&e);
     cleanEnv(&e);
