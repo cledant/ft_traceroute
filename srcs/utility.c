@@ -28,7 +28,7 @@ swapUint32(uint32_t val)
             (val >> 24 & 0x000000FF));
 }
 
-void
+inline void
 setupRespBuffer(t_response *resp)
 {
     resp->iovec[0].iov_base = resp->iovecBuff;
@@ -39,4 +39,16 @@ setupRespBuffer(t_response *resp)
     resp->msgHdr.msg_namelen = sizeof(struct sockaddr_in);
     resp->msgHdr.msg_control = NULL;
     resp->msgHdr.msg_controllen = 0;
+}
+
+inline uint8_t
+isStrAllDigit(char const *str)
+{
+    while (*str) {
+        if (!isdigit(*str)) {
+            return (FALSE);
+        }
+        ++str;
+    }
+    return (TRUE);
 }

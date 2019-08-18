@@ -2,6 +2,7 @@
 #define FT_TRACEROUTE_H
 
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <limits.h>
 #include <linux/icmp.h>
 #include <linux/ip.h>
@@ -34,15 +35,14 @@
 #define DEFAULT_TCP_PORT 80
 #define SOURCE_PORT 4242
 #define DEFAULT_SEQ 0
-#define NBR_OPTION 9
 #define MAX_PROBES 10
 #define MAX_TTL_VALUE UCHAR_MAX
-#define MAX_PORT USHRT_MAX
 #define MAX_PACKET_SIZE 65000
 #define MIN_ICMP_SIZE (uint8_t)(sizeof(struct icmphdr) + sizeof(struct iphdr))
 #define MIN_UDP_SIZE (uint8_t)(sizeof(struct udphdr) + sizeof(struct iphdr))
 #define MIN_TCP_SIZE (uint8_t)(sizeof(struct tcphdr) + sizeof(struct iphdr))
 #define MAX_TCP_WINDOW_SIZE 5820
+#define LOOPBACK 16777343
 
 typedef struct s_pseudoHdr
 {
@@ -53,8 +53,18 @@ typedef struct s_pseudoHdr
     uint16_t len;
 } t_pseudoHdr;
 
+typedef struct s_parse_opt
+{
+    char const *argv;
+    char const *nextArgv;
+    char const *paramName;
+    int32_t *val;
+    uint8_t off;
+} t_parse_opt;
+
 typedef struct s_option
 {
+    uint64_t position;
     uint8_t displayUsage;
     uint8_t noLookup;
     int32_t protocol;
@@ -106,11 +116,10 @@ typedef struct s_env
 } t_env;
 
 // opt.c
-void parseOptions(t_option *opt, int32_t argc, char const **argv);
+void parseOptions(t_option *opt, t_dest *dest, int32_t argc, char const **argv);
 
 // utility_network.c
-uint8_t getValidIp(struct addrinfo const *list, struct addrinfo **dest);
-struct addrinfo *resolveAddr(char const *addr);
+uint8_t resolveAddrToTrace(t_dest *dest);
 
 // process_response.c
 uint8_t checkTimeout(t_probes *probes, uint64_t probeIdx);
@@ -135,6 +144,7 @@ uint64_t convertTime(struct timeval const *ts);
 uint16_t swapUint16(uint16_t val);
 uint32_t swapUint32(uint32_t val);
 void setupRespBuffer(t_response *resp);
+uint8_t isStrAllDigit(char const *str);
 
 // display.c
 void displayUsage();

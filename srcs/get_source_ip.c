@@ -86,7 +86,7 @@ getSourceIp(t_env *e)
                                e->dest.addrDest->ai_addrlen);
     e->probes.startTime[0] = getCurrentTime();
     if (sendBytes < MIN_ICMP_SIZE) {
-        printf("ft_traceroute: error sending packet\n");
+        printf("connect: Invalid argument\n");
         return (TRUE);
     }
     while (1) {
@@ -97,7 +97,7 @@ getSourceIp(t_env *e)
         }
     }
     if (!e->dest.sourceIp) {
-        printf("ft_traceroute: failed to get source Ip\n");
+        printf("connect: Invalid argument\n");
         return (TRUE);
     }
     return (FALSE);

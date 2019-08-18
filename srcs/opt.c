@@ -1,162 +1,190 @@
 #include "ft_traceroute.h"
 
-static uint8_t
-setValue(int32_t *var,
-         int32_t val,
-         int32_t min,
-         int32_t max,
-         char const *errorMsg)
+static void
+parsingExit(t_dest *dest)
 {
-    if (val < min || val > max) {
-        printf("ft_traceroute: %s: %d\n", errorMsg, val);
-        return (0);
+    if (dest->resolvedAddr) {
+        freeaddrinfo(dest->resolvedAddr);
     }
-    *var = val;
-    return (1);
+    exit(EXIT_FAIL);
 }
 
 static uint8_t
-parseMulti(t_option *opt, char const *arg, uint64_t len)
+parsingInt32Option(t_parse_opt *opt, int32_t argc)
 {
-    if (arg[0] != '-') {
-        opt->displayUsage = TRUE;
-        return (0);
-    }
-    for (uint64_t i = 1; i < len; ++i) {
-        if (arg[i] == 'h') {
-            opt->displayUsage = TRUE;
-        } else if (arg[i] == 'n') {
-            opt->noLookup = TRUE;
-        } else if (arg[i] == 'I') {
-            opt->protocol = IPPROTO_ICMP;
-        } else if (arg[i] == 'T') {
-            opt->protocol = IPPROTO_TCP;
+    if (*(opt->argv + 1)) {
+        if (!isStrAllDigit(opt->argv + 1)) {
+            printf("Cannot handle `-%c' option with arg `%s' (argc %d)\n",
+                   *opt->argv,
+                   opt->argv + 1,
+                   argc);
+            return (TRUE);
         }
-    }
-    return (0);
-}
-
-static uint8_t
-parseInt(t_option *opt, char const *nextArg, uint64_t i)
-{
-    if (!nextArg) {
-        opt->displayUsage = TRUE;
-        return (0);
-    }
-    uint8_t off = 0;
-    switch (i) {
-        case 0:
-            if (!(off = setValue(&opt->nbProbes,
-                                 atoi(nextArg),
-                                 1,
-                                 MAX_PROBES,
-                                 "invalid probe value"))) {
-                opt->displayUsage = TRUE;
-            }
-            return (off);
-        case 1:
-            if (!(off = setValue(&opt->startTtl,
-                                 atoi(nextArg),
-                                 1,
-                                 MAX_TTL_VALUE,
-                                 "invalid start ttl value"))) {
-                opt->displayUsage = TRUE;
-            }
-            return (off);
-        case 2:
-            if (!(off = setValue(&opt->maxTtl,
-                                 atoi(nextArg),
-                                 1,
-                                 MAX_TTL_VALUE,
-                                 "invalid max ttl value"))) {
-                opt->displayUsage = TRUE;
-            }
-            return (off);
-        case 3:
-            if (!(off = setValue(&opt->port,
-                                 atoi(nextArg),
-                                 0,
-                                 MAX_PORT,
-                                 "invalid port value"))) {
-                opt->displayUsage = TRUE;
-            }
-            return (off);
-        case 4:
-            if (!(off = setValue(&opt->packetSize,
-                                 atoi(nextArg),
-                                 0,
-                                 MAX_PACKET_SIZE,
-                                 "invalid packet size value"))) {
-                opt->displayUsage = TRUE;
-            }
-            return (off);
-        default:
-            return (0);
-    }
-}
-
-static uint8_t
-parseSingle(t_option *opt, char const *arg, char const *nextArgv)
-{
-    static char const tab[][3] = { "-q", "-f", "-m", "-p", "-s",
-                                   "-h", "-n", "-I", "-T" };
-
-    for (uint64_t i = 0; i < NBR_OPTION; ++i) {
-        if (!strcmp(arg, tab[i])) {
-            if (i < 5) {
-                return (parseInt(opt, nextArgv, i));
-            } else {
-                return (parseMulti(opt, arg, 2));
-            }
+        opt->off = 0;
+        *opt->val = atoi(opt->argv + 1);
+    } else if (!(*(opt->argv + 1)) && opt->nextArgv) {
+        if (!isStrAllDigit(opt->nextArgv)) {
+            printf("Cannot handle `-%c' option with arg `%s' (argc %d)\n",
+                   *opt->argv,
+                   opt->nextArgv,
+                   argc + 1);
+            return (TRUE);
         }
-    }
-    return (0);
-}
-
-static uint8_t
-parseArg(t_option *opt, char const *argv, char const *nextArgv)
-{
-    uint64_t len = strlen(argv);
-
-    if (len < 2) {
-        opt->displayUsage = 1;
-        return (0);
-    } else if (len == 2) {
-        return (parseSingle(opt, argv, nextArgv));
+        opt->off = 1;
+        *opt->val = atoi(opt->nextArgv);
     } else {
-        return (parseMulti(opt, argv, len));
+        printf("Option `-%c' (argc %d) requires an argument: `-%c %s'\n",
+               *opt->argv,
+               argc,
+               *opt->argv,
+               opt->paramName);
+        return (TRUE);
     }
+    return (FALSE);
 }
 
-void
-parseOptions(t_option *opt, int32_t argc, char const **argv)
+static uint8_t
+parseOption(t_option *opt,
+            t_dest *dest,
+            char const *argv,
+            char const *nextArgv,
+            int32_t argc)
 {
-    *opt = (t_option){ FALSE,
-                       FALSE,
-                       IPPROTO_UDP,
-                       DEFAULT_NUMBER_OF_PROBES,
-                       DEFAULT_START_TTL,
-                       DEFAULT_MAX_TTL,
-                       DEFAULT_PACKET_SIZE,
-                       DEFAULT_OPT_PORT,
-                       NULL };
-
-    if (argc == 1) {
-        opt->displayUsage = 1;
-        return;
-    }
-    for (int32_t i = 1; i < (argc - 1); ++i) {
-        char const *nextPtr = NULL;
-        if ((i + 1) < (argc - 1)) {
-            nextPtr = argv[i + 1];
+    t_parse_opt pOpt = { NULL, nextArgv, NULL, NULL, 0 };
+    while (*argv) {
+        pOpt.argv = argv;
+        switch (*argv) {
+            case 'h':
+                opt->displayUsage = TRUE;
+                break;
+            case 'n':
+                opt->noLookup = TRUE;
+                break;
+            case 'I':
+                opt->protocol = IPPROTO_ICMP;
+                break;
+            case 'T':
+                opt->protocol = IPPROTO_TCP;
+                break;
+            case 'q':
+                pOpt.val = &opt->nbProbes;
+                pOpt.paramName = "nqueries";
+                if (parsingInt32Option(&pOpt, argc)) {
+                    parsingExit(dest);
+                }
+                return (pOpt.off);
+            case 'f':
+                pOpt.val = &opt->startTtl;
+                pOpt.paramName = "first_ttl";
+                if (parsingInt32Option(&pOpt, argc)) {
+                    parsingExit(dest);
+                }
+                return (pOpt.off);
+            case 'm':
+                pOpt.val = &opt->maxTtl;
+                pOpt.paramName = "max_ttl";
+                if (parsingInt32Option(&pOpt, argc)) {
+                    parsingExit(dest);
+                }
+                return (pOpt.off);
+            case 'p':
+                pOpt.val = &opt->port;
+                pOpt.paramName = "port";
+                if (parsingInt32Option(&pOpt, argc)) {
+                    parsingExit(dest);
+                }
+                return (pOpt.off);
+            default:
+                printf("Bad option `%c' (argc %d)\n", *argv, argc);
+                parsingExit(dest);
+                break;
         }
-        i += parseArg(opt, argv[i], nextPtr);
+        ++argv;
     }
-    if (argv[argc - 1][0] == '-') {
-        opt->displayUsage = TRUE;
-        return;
+    return (0);
+}
+
+static uint8_t
+parseToTrace(t_option *opt, t_dest *dest, char const *argv, int32_t argc)
+{
+    opt->toTrace = argv;
+    dest->toTrace = argv;
+    if (resolveAddrToTrace(dest)) {
+        printf("Cannot handle \"host\" cmdline arg `%s' on position %ld "
+               "(argc %d)\n",
+               argv,
+               opt->position,
+               argc);
+        parsingExit(dest);
     }
-    opt->toTrace = argv[argc - 1];
+    ++opt->position;
+    return (0);
+}
+
+static uint8_t
+parsePacketLen(t_option *opt, t_dest *dest, char const *argv, int32_t argc)
+{
+    if (!isStrAllDigit(argv)) {
+        printf("Cannot handle \"packetlen\" cmdline arg `%s' on position %ld "
+               "(argc %d)\n",
+               argv,
+               opt->position,
+               argc);
+        parsingExit(dest);
+    }
+    opt->packetSize = atoi(argv);
+    ++opt->position;
+    return (0);
+}
+
+static uint8_t
+parseArg(t_option *opt,
+         t_dest *dest,
+         char const *argv,
+         char const *nextArgv,
+         int32_t argc)
+{
+    uint64_t argLen = strlen(argv);
+
+    if (argLen > 1 && argv[0] == '-') {
+        return (parseOption(opt, dest, argv + 1, nextArgv, argc));
+    } else if (opt->position == 1) {
+        return (parseToTrace(opt, dest, argv, argc));
+    } else if (opt->position == 2) {
+        return (parsePacketLen(opt, dest, argv, argc));
+    } else {
+        printf("Extra arg `%s' (position %ld, argc %d)\n",
+               argv,
+               opt->position,
+               argc);
+        parsingExit(dest);
+    }
+    return (0);
+}
+
+static void
+endCheckAndInit(t_option *opt, t_dest *dest)
+{
+    if (!opt->toTrace) {
+        printf("Specify \"host\" missing argument\n");
+        parsingExit(dest);
+    }
+    if (opt->startTtl > opt->maxTtl) {
+        printf("first hop out of range\n");
+        parsingExit(dest);
+    }
+    if (opt->maxTtl > MAX_TTL_VALUE) {
+        printf("max hops cannot be more than 255\n");
+        parsingExit(dest);
+    }
+    if (opt->packetSize > MAX_PACKET_SIZE) {
+        printf("too big packetlen %d specified\n", opt->packetSize);
+        parsingExit(dest);
+    }
+    if (opt->nbProbes > MAX_PROBES || opt->nbProbes < 1) {
+        printf("no more than 10 probes per hop\n");
+        parsingExit(dest);
+    }
     if (opt->protocol == IPPROTO_ICMP) {
         if (opt->packetSize < MIN_ICMP_SIZE) {
             opt->packetSize = MIN_ICMP_SIZE;
@@ -179,4 +207,33 @@ parseOptions(t_option *opt, int32_t argc, char const **argv)
             opt->port = DEFAULT_TCP_PORT;
         }
     }
+}
+
+void
+parseOptions(t_option *opt, t_dest *dest, int32_t argc, char const **argv)
+{
+    *opt = (t_option){ 1,
+                       FALSE,
+                       FALSE,
+                       IPPROTO_UDP,
+                       DEFAULT_NUMBER_OF_PROBES,
+                       DEFAULT_START_TTL,
+                       DEFAULT_MAX_TTL,
+                       DEFAULT_PACKET_SIZE,
+                       DEFAULT_OPT_PORT,
+                       NULL };
+
+    if (argc <= 1) {
+        opt->displayUsage = TRUE;
+        return;
+    }
+    for (int32_t i = 1; i < argc; ++i) {
+        char const *nextPtr = NULL;
+
+        if ((i + 1) < argc) {
+            nextPtr = argv[i + 1];
+        }
+        i += parseArg(opt, dest, argv[i], nextPtr, i);
+    }
+    endCheckAndInit(opt, dest);
 }

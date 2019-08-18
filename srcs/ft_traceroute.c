@@ -18,32 +18,8 @@ cleanEnv(t_env *e)
 }
 
 static inline uint8_t
-resolveAddrToPing(t_dest *dest)
-{
-    if (!(dest->resolvedAddr = resolveAddr(dest->toTrace))) {
-        printf("ft_traceroute: %s: Name or service not known\n", dest->toTrace);
-        return (TRUE);
-    }
-    if (getValidIp(dest->resolvedAddr, &dest->addrDest)) {
-        printf("ft_traceroute: No valid ip for name or service\n");
-        return (TRUE);
-    }
-    if (!inet_ntop(AF_INET,
-                   &((struct sockaddr_in *)dest->addrDest->ai_addr)->sin_addr,
-                   dest->ip,
-                   INET_ADDRSTRLEN)) {
-        printf("ft_traceroute: Ip conversion failed\n");
-        return (TRUE);
-    }
-    return (FALSE);
-}
-
-static inline uint8_t
 init_network(t_env *e)
 {
-    if (resolveAddrToPing(&e->dest)) {
-        return (TRUE);
-    }
     for (uint64_t i = 0; i < e->probes.nbProbes; ++i) {
         setupRespBuffer(&e->probes.response[i]);
     }
@@ -53,6 +29,11 @@ init_network(t_env *e)
     if (initRawSocket(&e->probes)) {
         return (TRUE);
     }
+    printf("ft_traceroute to %s (%s), %d hops max, %d byte packets\n",
+           e->dest.addrDest->ai_canonname,
+           e->dest.ip,
+           e->opt.maxTtl,
+           e->opt.packetSize);
     if (getSourceIp(e)) {
         return (TRUE);
     }
@@ -71,20 +52,13 @@ main(int32_t argc, char const **argv)
 
     if (getuid()) {
         printf("ft_traceroute: not enough privilege, use sudo\n");
-        displayUsage();
         return (EXIT_FAIL);
     }
-    parseOptions(&e.opt, argc, argv);
+    parseOptions(&e.opt, &e.dest, argc, argv);
     if (e.opt.displayUsage) {
         displayUsage();
         return (EXIT_OK);
     }
-    if (e.opt.startTtl > e.opt.maxTtl) {
-        printf("ft_traceroute: start ttl out of range\n");
-        displayUsage();
-        return (EXIT_FAIL);
-    }
-    e.dest.toTrace = e.opt.toTrace;
     e.dest.protocol = e.opt.protocol;
     e.dest.tcpPort = e.opt.port;
     e.probes.nbProbes = e.opt.nbProbes;

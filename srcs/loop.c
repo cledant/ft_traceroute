@@ -74,11 +74,6 @@ loop(t_env *e)
 {
     uint64_t curSeq = e->opt.port;
 
-    printf("ft_traceroute to %s (%s), %d hops max, %d byte packets\n",
-           e->dest.addrDest->ai_canonname,
-           e->dest.ip,
-           e->opt.maxTtl,
-           e->opt.packetSize);
     for (uint64_t curTtl = e->opt.startTtl;
          curTtl < (uint64_t)e->opt.maxTtl + 1;
          ++curTtl) {

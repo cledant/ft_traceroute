@@ -4,7 +4,7 @@ void
 displayUsage()
 {
     printf("Usage: ft_traceroute [-hnIT] [-q nqueries] [-f first_ttl] [-m "
-           "max_ttl] [-p port] [-s packet_size] destination\n");
+           "max_ttl] [-p port] host [packet_size]\n");
     printf("\t-h : Display usage\n");
     printf("\t-n : No name lookup for host address\n");
     printf("\t-I : Use ICMP echo for probes\n");
@@ -15,8 +15,8 @@ displayUsage()
     printf("\t-p : Port\n\tFor UDP probe : initial port and is incremented at "
            "each probe\n\tICMP probe : initial sequence value\n\tTCP probe : "
            "constant port value\n");
-    printf("\t-s : Packet size. From 0 to MTU value.\n\tMTU value is usually "
-           "1500\n");
+    printf(
+      "\tPacket size. From 0 to MTU value.\n\tMTU value is usually 1500\n");
 }
 
 void
