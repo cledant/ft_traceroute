@@ -8,9 +8,9 @@ You may compile `ft_traceroute` by running `cmake`.
 
 ## Usage
 
-You need to be `root` or `sudo` in order to use `ft_traceroute`.
+You need to be `root` or use `sudo` in order to use `ft_traceroute`.
 
-Usage: ft_traceroute \[-hnIT\] \[-q nqueries\] \[-f first_ttl\] \[-m max_ttl\] \[-p port\] \[-s packet_size\] destination  
+Usage: ft_traceroute \[-hnIT\] \[-q nqueries\] \[-f first_ttl\] \[-m max_ttl\] \[-p port\] host \[packet_size\]  
 -h : Display usage  
 -n : No name lookup for host address  
 -I : Use ICMP echo for probes  
@@ -22,5 +22,5 @@ Usage: ft_traceroute \[-hnIT\] \[-q nqueries\] \[-f first_ttl\] \[-m max_ttl\] \
 For UDP probe : initial port and is incremented at each probe  
 ICMP probe : initial sequence value  
 TCP probe : constant port value  
--s : Packet size. From 0 to MTU value minus headers.  
+Packet size. From 0 to MTU value minus headers.  
 MTU value is usually 1500  

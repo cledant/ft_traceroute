@@ -24,7 +24,7 @@ checkWildcardIp(struct addrinfo const *list,
 {
     *dest = (struct addrinfo *)list;
     if (((struct sockaddr_in *)list->ai_addr)->sin_addr.s_addr == 0) {
-        ((struct sockaddr_in *)list->ai_addr)->sin_addr.s_addr = 16777343;
+        ((struct sockaddr_in *)list->ai_addr)->sin_addr.s_addr = LOOPBACK;
         strcpy(dstIp, "0.0.0.0");
         return (TRUE);
     }
