@@ -35,10 +35,11 @@ void
 printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup)
 {
     uint8_t sameDest = 0;
+    uint8_t init = FALSE;
 
     printf("%2lu ", curTtl);
     for (uint64_t i = 0; i < probes->nbProbes; ++i) {
-        if (((!i || memcmp(&probes->response[sameDest].addr,
+        if (((!init || memcmp(&probes->response[sameDest].addr,
                            &probes->response[i].addr,
                            sizeof(struct sockaddr_in))) &&
              (probes->endTime[i] - probes->startTime[i])) &&
@@ -46,6 +47,7 @@ printLoopStats(t_probes const *probes, uint64_t curTtl, uint8_t noLookup)
             char ip[INET_ADDRSTRLEN] = { 0 };
 
             sameDest = i;
+            init = TRUE;
             inet_ntop(AF_INET,
                       &probes->response[i].addr.sin_addr.s_addr,
                       ip,
