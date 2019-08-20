@@ -165,6 +165,10 @@ parseArg(t_option *opt,
 static void
 endCheckAndInit(t_option *opt, t_dest *dest)
 {
+    if (opt->displayUsage) {
+        displayUsage();
+        parsingExit(dest);
+    }
     if (!opt->toTrace) {
         printf("Specify \"host\" missing argument\n");
         parsingExit(dest);
